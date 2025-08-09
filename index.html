@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Tugrik's Memorial Service</title>
+<style>
+  body {
+    background-color: #111;
+    color: #eee;
+    font-family: "Courier New", Courier, monospace;
+    margin: 0;
+    padding: 1rem;
+  }
+  header {
+    background-color: #222;
+    padding: 1rem;
+    border-bottom: 1px solid #444;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: lightcyan;
+    flex-grow: 1;
+  }
+  #toggle-speakers {
+    font-size: 0.9rem;
+    cursor: pointer;
+    background: #333;
+    border: none;
+    color: #0ff;
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    user-select: none;
+    transition: background 0.3s ease;
+  }
+  #toggle-speakers:hover {
+    background: #555;
+  }
+  #speaker-index {
+    flex-basis: 100%;
+    margin-top: 0.5rem;
+    transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease, margin 0.3s ease;
+    overflow: hidden;
+    max-height: 200px; /* adjust for how tall the speaker list can be */
+    opacity: 1;
+  }
+  #speaker-index.collapsed {
+    max-height: 0;
+    opacity: 0;
+    padding: 0;
+    margin: 0;
+  }
+  #speaker-index a {
+    color: #0ff;
+    text-decoration: none;
+    background: #333;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    margin: 0 0.3rem 0.3rem 0;
+    display: inline-block;
+  }
+  #speaker-index a:hover {
+    background: #555;
+  }
+  main {
+    max-width: 800px; /* narrower column */
+    margin: 1rem auto;
+    padding: 0 1rem;
+    line-height: 1.4;
+  }
+  pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  .name {
+    color: cyan;
+    font-weight: bold;
+  }
+  .say {
+    color: lightgreen;
+  }
+  .exit {
+    color: yellow;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Tugrik's Memorial Service - August 8, 2025</h1>
+  <button id="toggle-speakers" aria-expanded="true" aria-controls="speaker-index">
+    Hide Speakers ▲
+  </button>
+  <div id="speaker-index">Loading speakers...</div>
+</header>
+<main>
+  <pre id="log-content">Loading log...</pre>
+</main>
+
+<script>
+function escapeHtml(text) {
+  const map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;',
+  };
+  return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+function colorizeLog(rawText) {
+  let text = escapeHtml(rawText);
+
+  const speakers = new Set();
+
+  // Simplified speaker pattern: single "word" names only, no spaces
+  const speakerRegex = /\b([A-Z][\w'._]*)\b(?=\s+(?:says|asks|exclaims|does|poses|is|<|:))/g;
+
+  text = text.replace(speakerRegex, (match, name) => {
+    speakers.add(name);
+    const anchorName = name; // no spaces, so safe to keep as is
+    return `<span class="name" id="speaker-${anchorName}">${name}</span>`;
+  });
+
+  text = text.replace(/&quot;([^&]*)&quot;/g, '<span class="say">&quot;$1&quot;</span>');
+
+  const indexDiv = document.getElementById('speaker-index');
+  if (speakers.size > 0) {
+    indexDiv.innerHTML = [...speakers]
+      .sort()
+      .map(name => `<a href="#speaker-${name}">${name}</a>`)
+      .join(' ');
+  } else {
+    indexDiv.textContent = "No speakers detected.";
+  }
+
+  return text;
+}
+
+fetch('mu_log.txt')
+  .then(response => response.text())
+  .then(text => {
+    document.getElementById('log-content').innerHTML = colorizeLog(text);
+  });
+
+// Toggle button for speaker list
+const toggleBtn = document.getElementById('toggle-speakers');
+const speakerIndex = document.getElementById('speaker-index');
+
+toggleBtn.addEventListener('click', () => {
+  const collapsed = speakerIndex.classList.toggle('collapsed');
+  toggleBtn.textContent = collapsed ? 'Show Speakers ▼' : 'Hide Speakers ▲';
+  toggleBtn.setAttribute('aria-expanded', !collapsed);
+});
+</script>
+</body>
+</html>
+
+
+
+
+
